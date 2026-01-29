@@ -199,3 +199,12 @@ void blinkYellowAlert() {
   delay(1000);
 }
 
+--
+
+## Configuração Firewall
+
+![](assets/imagem.png)
+
+![](assets/image (2).png)
+
+![](assets/imagem (1).png)
