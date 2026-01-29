@@ -48,3 +48,153 @@
 | **RF4, RF7** |  **SHOULD HAVE** | Importantes para manutenção proativa e análise de dados futuros. |
 | **RF3** |  **SHOULD HAVE** | Controle manual é importante, mas não a prioridade do sistema "inteligente". |
 | **RF8, RNF4, RNF5** |  **COULD HAVE** | Recursos adicionais que agregam valor. |
+
+
+
+![Arduino](https://img.shields.io/badge/Platform-Arduino-00979D?style=flat&logo=arduino)
+![C++](https://img.shields.io/badge/Language-C++-00599C?style=flat&logo=c%2B%2B)
+![Status](https://img.shields.io/badge/Status-Prototype-yellow)
+
+Este projeto consiste na modelagem e desenvolvimento de um sistema de trânsito inteligente baseado em **IoT (Internet of Things)**. O sistema controla o fluxo de um semáforo utilizando sensores para detectar a presença de veículos e monitora condições ambientais (luz e umidade) para ajustar o comportamento da sinalização em situações adversas.
+
+---
+
+## 📐 Arquitetura do Sistema
+
+### Topologia de Rede: **Estrela**
+Foi selecionada a topologia em estrela, onde o **Arduino (UNO)** atua como o nó central.
+
+* **Controle Centralizado:** O Arduino gerencia todos os sensores e atuadores.
+* **Segurança:** Falhas em sensores periféricos não derrubam o sistema principal.
+* **Manutenção:** Facilidade para adicionar novos módulos sem interromper o funcionamento da rede.
+
+### 🔌 Diagrama Funcional e Componentes
+
+| Componente | Tipo | Função no Projeto |
+| :--- | :--- | :--- |
+| **Arduino UNO** | Controlador | "Cérebro" do sistema. Processa dados e controla os semáforos. |
+| **Fonte 12V** | Alimentação | Garante energia estável através do pino VIN. |
+| **HC-SR04** | Sensor | Ultrassônico. Detecta fluxo de carros para ajustar tempos de espera. |
+| **DHT-22** | Sensor | Monitora umidade e temperatura. Aciona modo de alerta em chuvas intensas. |
+| **LDR (PhotoResistor)** | Sensor | Mede luminosidade (Dia/Noite) para economia de energia. |
+| **LEDs (Semáforo)** | Atuador | Sinalização visual para duas vias (A e B). |
+
+---
+
+## ⚙️ Funcionalidades e Lógica
+
+O código implementa uma lógica de decisão baseada em prioridades:
+
+1.  **Modo de Alerta (Segurança):** Se a umidade ultrapassar **90%** (indicando chuva forte) ou se houver erro de leitura no sensor de distância (`0`), o sistema entra em modo de alerta (Luzes Amarelas piscando).
+2.  **Fluxo de Trânsito:** O sistema lê a distância dos veículos. Se houver pouco fluxo (`distance >= 200`), o tempo de sinal verde é reduzido.
+3.  **Ciclo Padrão:** Alternância entre Via A e Via B com tempos de segurança (amarelo).
+
+---
+## Diagrama Funcional
+
+![](assets/diagrama_funcional.png)
+---
+
+## 💻 Código Fonte
+
+```cpp
+#include <DHT.h>
+
+// Definição de Pinos
+#define PIN_TRIG 3
+#define PIN_ECHO 2
+#define LDR A0
+#define PIN_DHT 4
+
+// Configuração dos Semáforos (R, Y, G)
+int tLightsA[3] = {5, 6, 7};
+int tLightsB[3] = {8, 9, 10};
+
+DHT dht(PIN_DHT, DHT22);
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(PIN_TRIG, OUTPUT);
+  pinMode(PIN_ECHO, INPUT);
+  dht.begin();
+  
+  // Inicializa pinos dos LEDs
+  for(int i = 0; i <= 2; i++) {
+    pinMode(tLightsA[i], OUTPUT);
+    pinMode(tLightsB[i], OUTPUT);
+  }
+}
+
+void loop() {
+  float valueHumidity;
+  
+  while (true) {
+    int distance = checkFlow();
+    valueHumidity = dht.readHumidity();
+
+    // 1. Verificação de Segurança (Chuva ou Erro de Sensor)
+    if(valueHumidity >= 90 || distance == 0) {
+      blinkYellowAlert();
+      break; // Reinicia o loop para nova verificação
+    }
+
+    // 2. Ciclo Normal do Semáforo
+    // Via A Vermelho, Via B Verde
+    digitalWrite(tLightsB[1], LOW);
+    digitalWrite(tLightsB[0], HIGH); // Verde B
+    digitalWrite(tLightsA[0], LOW);
+    digitalWrite(tLightsA[2], HIGH); // Vermelho A
+    
+    // Ajuste inteligente de tempo baseado na distância
+    if(distance >= 200) {
+      delay(4000);
+    }
+    delay(5000); 
+
+    // Transição Via A
+    digitalWrite(tLightsA[2], LOW);
+    digitalWrite(tLightsA[1], HIGH); // Amarelo A
+    delay(2000);
+    
+    // Via A Verde, Via B Vermelho
+    digitalWrite(tLightsA[1], LOW);
+    digitalWrite(tLightsA[0], HIGH); // Verde A
+    digitalWrite(tLightsB[0], LOW);
+    digitalWrite(tLightsB[2], HIGH); // Vermelho B
+    delay(5000);
+    
+    // Transição Via B
+    digitalWrite(tLightsB[2], LOW);
+    digitalWrite(tLightsB[1], HIGH); // Amarelo B
+    delay(2000);
+  }
+}
+
+// Função para medir distância (HC-SR04)
+int checkFlow() {
+  digitalWrite(PIN_TRIG, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(PIN_TRIG, LOW);
+  int duration = pulseIn(PIN_ECHO, HIGH);
+  if(duration == 0) return 0;
+  return duration / 58;
+}
+
+// Função auxiliar para desligar luzes
+void TurnOffAllLights() {
+  for(int i = 0; i <= 2; i++) {
+    digitalWrite(tLightsA[i], LOW);
+    digitalWrite(tLightsB[i], LOW);
+  }
+}
+
+// Função auxiliar para piscar alerta
+void blinkYellowAlert() {
+  TurnOffAllLights();
+  digitalWrite(tLightsA[1], HIGH);
+  digitalWrite(tLightsB[1], HIGH);
+  delay(1000);
+  digitalWrite(tLightsA[1], LOW);
+  digitalWrite(tLightsB[1], LOW);
+  delay(1000);
+}
