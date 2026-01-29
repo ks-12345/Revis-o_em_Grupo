@@ -199,12 +199,28 @@ void blinkYellowAlert() {
   delay(1000);
 }
 
---
+## 🔐 Configuração do Firewall
 
-## Configuração Firewall
+O firewall foi configurado com o objetivo de aumentar a segurança do servidor, permitindo apenas as portas necessárias para a comunicação do sistema.
+
+### 📷 Verificação do status do firewall
 
 ![](assets/imagem.png)
 
+Nesta etapa foi verificado se o firewall estava ativo e funcionando corretamente no sistema.
+
+---
+
+### 📷 Liberação da porta do protocolo MQTT
+
 ![](assets/image (2).png)
 
+Foi liberada a porta **1883**, utilizada pelo protocolo MQTT, permitindo a comunicação entre os dispositivos IoT e o servidor.
+
+---
+
+### 📷 Bloqueio de acessos não autorizados
+
 ![](assets/imagem (1).png)
+
+Após a liberação das portas necessárias, o firewall foi configurado para bloquear acessos externos não autorizados, garantindo maior segurança ao sistema.
