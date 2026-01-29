@@ -9,20 +9,30 @@
     body {
       font-family: Arial, sans-serif;
       text-align: center;
-      background: #f4f4f4;
+      background: #cab3b3;
     }
 
     h1 {
       margin-bottom: 20px;
     }
 
-    .semaforo {
+    .semaforoA{
       width: 100px;
       background: #222;
       padding: 15px;
       border-radius: 15px;
       margin: 0 auto 20px;
     }
+
+    .semaforoB {
+
+      width: 100px;
+      background: #222;
+      padding: 15px;
+      border-radius: 15px;
+      margin: 0 auto 20px;
+    }
+
 
     .luz {
       width: 60px;
@@ -32,9 +42,9 @@
       opacity: 0.3;
     }
 
-    #vermelho { background: red; }
-    #amarelo { background: yellow; }
-    #verde { background: green; }
+    #vermelho, #vermelho2 { background: red; }
+    #amarelo, #amarelo2 { background: yellow; }
+    #verde, #verde2 { background: green; }
 
     button {
       margin: 5px;
@@ -43,24 +53,50 @@
       border-radius: 5px;
       cursor: pointer;
       font-weight: bold;
+      background-color:  blanchedalmond;
     }
 
     button:hover {
       opacity: 0.8;
     }
+
+    #manual{
+      width: 150px;
+      background: #000000;
+      padding: 2px;
+      border-radius: 10px;
+      margin: auto;
+ }
+
+ p {
+  color: white;
+ }
+
   </style>
 </head>
 
 <body>
   <h1>Controle de Semáforo</h1>
-
-  <div class="semaforo">
+  <p><strong>Semáforo - Via A</strong></p>
+  <div class="semaforoA">
     <div id="vermelho" class="luz"></div>
     <div id="amarelo" class="luz"></div>
     <div id="verde" class="luz"></div>
   </div>
 
-  <button onclick="manual()">Manual</button>
+  <p><strong>Semáforo - Via B</strong></p>
+ <div class="semaforoB">
+    <div id="vermelho2" class="luz"></div>
+    <div id="amarelo2" class="luz"></div>
+    <div id="verde2" class="luz"></div>
+  </div>
+
+ <div id="manual">
+  <p><strong>Manual</strong></p>
+  <button onclick="viaA()">Liberar Via A</button>
+  <button onclick="viaB()">Liberar Via B</button>
+</div>
+
   <button onclick="automatico()">Automático</button>
   <button onclick="alerta()">Alerta</button>
   <button onclick="desligar()">Desligar</button>
@@ -69,6 +105,9 @@
     const vermelho = document.getElementById("vermelho");
     const amarelo = document.getElementById("amarelo");
     const verde = document.getElementById("verde");
+     const vermelho2 = document.getElementById("vermelho2");
+    const amarelo2 = document.getElementById("amarelo2");
+    const verde2 = document.getElementById("verde2");
 
     let intervalo = null;
 
@@ -76,7 +115,30 @@
       vermelho.style.opacity = 0.3;
       amarelo.style.opacity = 0.3;
       verde.style.opacity = 0.3;
+      vermelho2.style.opacity = 0.3;
+      amarelo2.style.opacity = 0.3;
+      verde2.style.opacity = 0.3;
     }
+
+    function cleamver1() {
+      vermelho.style.opacity = 0.3;
+    }
+    function cleamver2() {
+      vermelho2.style.opacity = 0.3;
+    }
+    function cleamama() {
+      amarelo.style.opacity = 0.3;
+    }
+     function cleamama2() {
+      amarelo2.style.opacity = 0.3;
+    }
+    function cleamver() {
+      verde.style.opacity = 0.3;
+    }
+     function cleamver2() {
+      verde2.style.opacity = 0.3;
+    }
+
 
     function ativarLuz(cor) {
       apagarLuzes();
@@ -84,24 +146,86 @@
       if (cor === "amarelo") amarelo.style.opacity = 1;
       if (cor === "verde") verde.style.opacity = 1;
     }
+    
+function ativarLuzB (cor) {
+   if (cor === "vermelho2") vermelho2.style.opacity = 1;
+      if (cor === "amarelo2") amarelo2.style.opacity = 1;
+      if (cor === "verde2") verde2.style.opacity = 1;
+}
 
-    function manual() {
+    function viaA() {
       clearInterval(intervalo);
-      ativarLuz("verde");
+      const tempoA = 5000;
+      let ligado = false;
+
+      intervalo = setInterval(() => {
+        apagarLuzes();
+         vermelho.style.opacity = 1
+        if (ligado) amarelo2.style.opacity = 1;
+        ligado = !ligado;
+      }, 500);
+
+      setTimeout(() => {
+        clearInterval(intervalo);
+        apagarLuzes()
+       verde.style.opacity = 1
+       vermelho2.style.opacity = 1
+      }, tempoA);
+    }
+      
+     
+    function viaB() {
+      clearInterval(intervalo);
+      const tempoB = 5000;
+      let ligado = false;
+
+      intervalo = setInterval(() => {
+        apagarLuzes();
+         vermelho2.style.opacity = 1
+        if (ligado) amarelo.style.opacity = 1;
+        ligado = !ligado;
+      }, 500);
+
+      setTimeout(() => {
+        clearInterval(intervalo);
+        apagarLuzes()
+       verde2.style.opacity = 1;
+      vermelho.style.opacity = 1
+      }, tempoB);
     }
 
+    // ----------------------------------------
+    
     function automatico() {
       clearInterval(intervalo);
       let estado = 0;
 
       intervalo = setInterval(() => {
-        if (estado === 0) ativarLuz("verde");
-        if (estado === 1) ativarLuz("amarelo");
-        if (estado === 2) ativarLuz("vermelho");
+        if (estado === 0) {
+          ativarLuz("verde") 
+          ativarLuzB ("vermelho2")
+        }
+        else if (estado === 1) {
+          ativarLuz("amarelo");
+          ativarLuzB("vermelho2")
+        }
+        else if(estado === 2) {
+          ativarLuz("vermelho");
+          ativarLuzB("verde2")
+        }
+         else if (estado === 3) {
+          ativarLuz("vermelho");
+          ativarLuzB("amarelo2")
+        }
 
-        estado = (estado + 1) % 3;
+          estado = (estado + 1) % 4;
       }, 2000);
+      
     }
+
+ 
+
+    // -----------------------------
 
     function alerta() {
       clearInterval(intervalo);
@@ -109,10 +233,11 @@
 
       intervalo = setInterval(() => {
         apagarLuzes();
-        if (ligado) amarelo.style.opacity = 1;
+        if (ligado) amarelo.style.opacity = 1, amarelo2.style.opacity = 1;
         ligado = !ligado;
       }, 500);
     }
+
 
     function desligar() {
       clearInterval(intervalo);
