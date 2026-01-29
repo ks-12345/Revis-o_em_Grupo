@@ -99,105 +99,130 @@ O código implementa uma lógica de decisão baseada em prioridades:
 
 ```cpp
 #include <DHT.h>
-
-// Definição de Pinos
 #define PIN_TRIG 3
 #define PIN_ECHO 2
 #define LDR A0
 #define PIN_DHT 4
 
-// Configuração dos Semáforos (R, Y, G)
-int tLightsA[3] = {5, 6, 7};
-int tLightsB[3] = {8, 9, 10};
+int tLightsA[3] = {5,6,7};
+int tLightsB[3] = {8,9,10};
 
-DHT dht(PIN_DHT, DHT22);
+DHT dht(PIN_DHT,DHT22);
+
 
 void setup() {
   Serial.begin(9600);
   pinMode(PIN_TRIG, OUTPUT);
   pinMode(PIN_ECHO, INPUT);
   dht.begin();
-  
-  // Inicializa pinos dos LEDs
-  for(int i = 0; i <= 2; i++) {
+  for(int i = 0; i<=2;i++) {
     pinMode(tLightsA[i], OUTPUT);
     pinMode(tLightsB[i], OUTPUT);
   }
 }
 
+
+
 void loop() {
   float valueHumidity;
-  
+  int valueLight;
   while (true) {
     int distance = checkFlow();
     valueHumidity = dht.readHumidity();
-
-    // 1. Verificação de Segurança (Chuva ou Erro de Sensor)
-    if(valueHumidity >= 90 || distance == 0) {
-      blinkYellowAlert();
-      break; // Reinicia o loop para nova verificação
+    valueLight = analogRead(LDR);
+    // Serial.print("Distance in CM: ");
+    // Serial.println(distance);
+    if(valueHumidity >= 90) {
+      TurnOffAllLights();
+      digitalWrite(tLightsA[1], HIGH);
+      digitalWrite(tLightsB[1], HIGH);
+      delay(1000);
+      digitalWrite(tLightsA[1], LOW);
+      digitalWrite(tLightsB[1], LOW);
+      delay(1000);
+      break;
     }
-
-    // 2. Ciclo Normal do Semáforo
-    // Via A Vermelho, Via B Verde
+    if(distance == 0) {
+      TurnOffAllLights();
+      digitalWrite(tLightsA[1], HIGH);
+      digitalWrite(tLightsB[1], HIGH);
+      delay(1000);
+      digitalWrite(tLightsA[1], LOW);
+      digitalWrite(tLightsB[1], LOW);
+      delay(1000);
+      break;
+    }
     digitalWrite(tLightsB[1], LOW);
-    digitalWrite(tLightsB[0], HIGH); // Verde B
+    digitalWrite(tLightsB[0], HIGH);
     digitalWrite(tLightsA[0], LOW);
-    digitalWrite(tLightsA[2], HIGH); // Vermelho A
-    
-    // Ajuste inteligente de tempo baseado na distância
+    digitalWrite(tLightsA[2], HIGH);
     if(distance >= 200) {
       delay(4000);
     }
-    delay(5000); 
-
-    // Transição Via A
-    digitalWrite(tLightsA[2], LOW);
-    digitalWrite(tLightsA[1], HIGH); // Amarelo A
-    delay(2000);
-    
-    // Via A Verde, Via B Vermelho
-    digitalWrite(tLightsA[1], LOW);
-    digitalWrite(tLightsA[0], HIGH); // Verde A
-    digitalWrite(tLightsB[0], LOW);
-    digitalWrite(tLightsB[2], HIGH); // Vermelho B
     delay(5000);
-    
-    // Transição Via B
+    digitalWrite(tLightsA[2], LOW);
+    digitalWrite(tLightsA[1], HIGH);
+    delay(2000);
+    digitalWrite(tLightsA[1], LOW);
+    digitalWrite(tLightsA[0], HIGH);
+    digitalWrite(tLightsB[0], LOW);
+    digitalWrite(tLightsB[2], HIGH);
+    delay(5000);
     digitalWrite(tLightsB[2], LOW);
-    digitalWrite(tLightsB[1], HIGH); // Amarelo B
+    digitalWrite(tLightsB[1], HIGH);
     delay(2000);
   }
+  // Serial.print("Analog value in LDR:");
+  // Serial.println(valueLight);
+  // Serial.print("Humidity value in DHT:");
+  // Serial.println(valueHumidity);
 }
 
-// Função para medir distância (HC-SR04)
 int checkFlow() {
   digitalWrite(PIN_TRIG, HIGH);
   delayMicroseconds(10);
   digitalWrite(PIN_TRIG, LOW);
   int duration = pulseIn(PIN_ECHO, HIGH);
-  if(duration == 0) return 0;
-  return duration / 58;
+  if(duration == 0) {
+    return 0;
+  }
+  int distance = duration / 58;
+  return distance;
 }
 
-// Função auxiliar para desligar luzes
 void TurnOffAllLights() {
-  for(int i = 0; i <= 2; i++) {
+  for(int i = 0; i<=2;i++) {
     digitalWrite(tLightsA[i], LOW);
     digitalWrite(tLightsB[i], LOW);
   }
 }
 
-// Função auxiliar para piscar alerta
-void blinkYellowAlert() {
+void TurnOnLightsAlert(bool active) {
   TurnOffAllLights();
-  digitalWrite(tLightsA[1], HIGH);
-  digitalWrite(tLightsB[1], HIGH);
-  delay(1000);
-  digitalWrite(tLightsA[1], LOW);
-  digitalWrite(tLightsB[1], LOW);
-  delay(1000);
+  while (active) {
+    digitalWrite(tLightsA[1], HIGH);
+    digitalWrite(tLightsB[1], HIGH);
+    delay(1000);
+    digitalWrite(tLightsA[1], LOW);
+    digitalWrite(tLightsB[1], LOW);
+    delay(1000);
+  }
+  
 }
+
+void TurnOnGreenLightA() {
+  TurnOffAllLights();
+  digitalWrite(tLightsA[0], HIGH);
+  digitalWrite(tLightsB[2], HIGH);
+}
+
+void TurnOnGreenLightB() {
+  TurnOffAllLights();
+  digitalWrite(tLightsA[2], HIGH);
+  digitalWrite(tLightsB[0], HIGH);
+}
+```
+---
 
 ## 🔐 Configuração do Firewall
 
@@ -205,22 +230,35 @@ O firewall foi configurado com o objetivo de aumentar a segurança do servidor, 
 
 ### 📷 Verificação do status do firewall
 
-![](assets/imagem.png)
+![](assets/3.png)
 
 Nesta etapa foi verificado se o firewall estava ativo e funcionando corretamente no sistema.
 
----
+--
 
 ### 📷 Liberação da porta do protocolo MQTT
 
-![](assets/image (2).png)
+
+![](assets/image.png)
 
 Foi liberada a porta **1883**, utilizada pelo protocolo MQTT, permitindo a comunicação entre os dispositivos IoT e o servidor.
 
----
+--
 
 ### 📷 Bloqueio de acessos não autorizados
 
-![](assets/imagem (1).png)
+![](assets/2.png)
 
 Após a liberação das portas necessárias, o firewall foi configurado para bloquear acessos externos não autorizados, garantindo maior segurança ao sistema.
+--
+### 📲 Suporte a IoT
+
+![](assets/tabela.png)
+
+---
+
+## 👩‍💻 Fluxograma do Sistema
+
+O fluxograma apresenta o funcionamento de um sistema inteligente de controle de semáforo, que monitora o volume de tráfego por meio de sensores. O sistema verifica a comunicação com o servidor e o funcionamento dos sensores, ativando modos de segurança em caso de falhas. Também considera condições climáticas e a possibilidade de controle manual. Com base nessas análises, os tempos do semáforo são ajustados automaticamente, os dados são registrados em um banco central e o semáforo opera de forma segura e eficiente.
+
+![](assets/Fluxograma.png)
